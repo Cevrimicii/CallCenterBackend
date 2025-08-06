@@ -1,20 +1,21 @@
-from sqlmodel import Column, SQLModel, Field, JSON, Relationship
-from typing import List, Optional,Dict
+from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional, TYPE_CHECKING
 
-from sqlmodel import Column, SQLModel, Field, JSON, Relationship
-from typing import Optional, Dict
-from datetime import datetime
-
-from app.models.invoice import Invoice
+if TYPE_CHECKING:
+    from app.models.invoice import Invoice
 
 class InvoiceItem(SQLModel, table=True):
+    __tablename__ = "invoice_item"
+    
     id: Optional[int] = Field(default=None, primary_key=True)
-    invoice_id: int = Field(foreign_key="invoice.id")
+    invoice_id: int = Field(foreign_key="invoice.id", index=True)
 
-    service_type: str  # SMS, Email, Call
-    description: str
-    quantity: int
-    unit_price: float
-    total_price: float
+    service_type: str = Field(max_length=50)  # SMS, Email, Call
+    description: str = Field(max_length=500)
+    quantity: int = Field(ge=0)
+    unit_price: float = Field(ge=0)
+    total_price: float = Field(ge=0)
+    tax_rate: Optional[float] = Field(default=0.18, ge=0, le=1)  # KDV oranı
 
-    invoice: Optional[Invoice] = Relationship(back_populates="items")
+    # İlişkiler
+    invoice: Optional["Invoice"] = Relationship(back_populates="items")

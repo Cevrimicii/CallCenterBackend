@@ -3,29 +3,13 @@ from app.db.database import init_db
 from app.crud import getUsers, create_user,get_package_by_user, get_packages
 from app.models.package import Package
 from app.models.user import User
+from .user_routes import router as user_router
+from .package_routes import router as package_router
 
 router = APIRouter()
 
-@router.on_event("startup")
-def on_startup():
-    init_db()
+api_router = APIRouter()
 
-@router.get("/users", response_model=list[User])
-def get_users():
-    return getUsers()
+api_router.include_router(user_router)
+api_router.include_router(package_router)
 
-@router.post("/users", response_model=User)
-def add_user(user: User):
-    return create_user(user)
-
-@router.get("/packages", response_model=list[Package])
-def get_packagelist():
-    return get_packages()
-
-@router.get("/package", response_model=Package)
-def getPackageByUser(phoneNumber: str):
-    return get_package_by_user(phoneNumber)
-
-@router.post("/package", response_model=Package)
-def add_user(package: Package):
-    return create_user(package)

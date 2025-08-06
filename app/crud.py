@@ -1,38 +1,18 @@
-from sqlmodel import Session, select
-from app.models.package import Package
-from app.models.user import User
-from app.db.database import engine
+# Bu dosya artık deprecated. Yeni CRUD operasyonları için aşağıdaki dosyaları kullanın:
+# - app.crud.user_crud
+# - app.crud.package_crud  
+# - app.crud.invoice_crud
+# - app.crud.invoice_item_crud
+# - app.crud.service_purchase_crud
+# - app.crud.remaining_uses_crud
+# - app.crud.package_change_request_crud
+# - app.crud.agent_intent_log_crud
+# - app.crud.problem_crud
 
-def getUsers():
-    with Session(engine) as session:
-        return session.exec(select(User)).all()
-    
-def get_packages():
-    with Session(engine) as session:
-        return session.exec(select(Package)).all()
+# Geçici uyumluluk için mevcut fonksiyonları import ediyoruz
+from app.crud.user_crud import get_users as getUsers, create_user, get_user_by_phone
+from app.crud.package_crud import get_packages, create_package, get_package_by_user_phone
 
 def get_package_by_user(phoneNumber: str):
-    with Session(engine) as session:
-        query = select(User).where(User.phone_number == phoneNumber)
-        user = session.exec(query).first()
-        if user is not None:
-            statement = select(Package).where(Package.id == user.package_id)
-            result = session.exec(statement).first()
-            return result
-        else:
-            return None
-        
-
-def create_user(user: User):
-    with Session(engine) as session:
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        return user
-    
-def create_package(package: Package):
-    with Session(engine) as session:
-        session.add(package)
-        session.commit()
-        session.refresh(package)
-        return package
+    """Eski API uyumluluğu için"""
+    return get_package_by_user_phone(phoneNumber)
