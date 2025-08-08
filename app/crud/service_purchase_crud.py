@@ -43,6 +43,7 @@ def get_service_purchases_by_user_and_type(user_id: int, service_type: str) -> L
 
 def create_service_purchase(service_purchase: ServicePurchase) -> ServicePurchase:
     """Yeni hizmet satın alımı oluştur"""
+    service_purchase.purchase_price = service_purchase.unit_price*service_purchase.count
     with Session(engine) as session:
         session.add(service_purchase)
         session.commit()

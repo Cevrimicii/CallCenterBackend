@@ -22,7 +22,6 @@ def get_user_by_phone(phone_number: str) -> Optional[User]:
         query = select(User).where(User.phone_number == phone_number)
         return session.exec(query).first()
 
-
 def create_user(user: User) -> User:
     """Yeni kullanıcı oluştur"""
     with Session(engine) as session:

@@ -1,12 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
+from sqlmodel import Session, select
+from app.db.database import engine
 from app.crud.package_crud import (
     get_packages,
     get_package_by_id,
     create_package,
     update_package,
     delete_package,
-    get_active_packages
 )
 from app.models.package import Package
 
@@ -24,7 +25,23 @@ def get_all_packages():
 @router.get("/active", response_model=List[Package])
 def get_active_packages_list():
     """Aktif paketleri getir"""
-    return get_active_packages()
+    with Session(engine) as session:
+        query = select(Package).where(Package.is_active == True)
+        return session.exec(query).all()
+
+@router.get("/{name}", response_model=List[Package])
+def get_package_by_name(package_name: str):
+    """Verilen isime göre paketleri getirir"""
+    with Session(engine) as session:
+        query = select(Package).where(Package.is_active == True).where(Package.name == package_name)
+        return session.exec(query).all()
+
+@router.get("/{package_type}", response_model=List[Package])
+def get_package_by_type(package_type: str):
+    """Verilen tipe göre paketleri getirir"""
+    with Session(engine) as session:
+        query = select(Package).where(Package.is_active == True).where(Package.type == package_type)
+        return session.exec(query).all()
 
 @router.get("/{package_id}", response_model=Package)
 def get_package(package_id: int):

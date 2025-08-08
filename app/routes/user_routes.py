@@ -7,8 +7,8 @@ from app.crud.user_crud import (
     create_user,
     update_user,
     delete_user,
-    get_user_current_package
 )
+from app.crud.subscription_crud import get_user_active_subscription
 from app.models.user import User
 from app.models.package import Package
 
@@ -42,10 +42,11 @@ def get_user_by_phone_number(phone_number: str):
 @router.get("/{user_id}/package", response_model=Package)
 def get_user_package(user_id: int):
     """Kullanıcının mevcut paketini getir"""
-    package = get_user_current_package(user_id)
-    if not package:
+    subscription = get_user_active_subscription(user_id)
+    if subscription and subscription.package:
+        return subscription.package
+    else:
         raise HTTPException(status_code=404, detail="No active package found")
-    return package
 
 @router.post("/", response_model=User)
 def add_user(user: User):

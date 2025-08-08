@@ -20,7 +20,7 @@ def get_problem_by_id(problem_id: int) -> Optional[Problem]:
 def get_problems_by_location(location: str) -> List[Problem]:
     """Lokasyona göre problemleri getir"""
     with Session(engine) as session:
-        query = select(Problem).where(Problem.location == location)
+        query = select(Problem).where(Problem.location == location).where(Problem.status == "pending")
         return session.exec(query).all()
 
 

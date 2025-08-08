@@ -1,7 +1,11 @@
 from sqlmodel import Session, select
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.models.invoice import Invoice
+from app.models.invoiceitem import InvoiceItem
+from app.models.servicepurchase import ServicePurchase
+from app.models.subscription import Subscription
+from app.models.package import Package
 from app.db.database import engine
 
 
@@ -39,9 +43,75 @@ def get_unpaid_invoices() -> List[Invoice]:
 
 
 def create_invoice(invoice: Invoice) -> Invoice:
-    """Yeni fatura oluştur"""
+    """Yeni fatura oluştur - Son 1 ay içindeki hizmet satın alımlarını ve aktif paket ücretini otomatik ekler"""
     with Session(engine) as session:
+        # Önce faturayı kaydet
         session.add(invoice)
+        session.commit()
+        session.refresh(invoice)
+        
+        # Kullanıcının aktif aboneliğini ve paketini getir
+        active_subscription = session.exec(
+            select(Subscription).where(
+                Subscription.user_id == invoice.user_id,
+                Subscription.is_active == True
+            )
+        ).first()
+        
+        total_amount = invoice.total_amount or 0
+        
+        # Aktif paket ücretini faturaya ekle
+        if active_subscription:
+            package = session.get(Package, active_subscription.package_id)
+            if package and package.monthly_fee and package.monthly_fee > 0:
+                package_item = InvoiceItem(
+                    invoice_id=invoice.id,
+                    service_type="Package",
+                    description=f"Aylık Paket Ücreti - {package.name}",
+                    quantity=1,
+                    unit_price=package.monthly_fee,
+                    total_price=package.monthly_fee,
+                    tax_rate=0.18  # %18 KDV
+                )
+                
+                session.add(package_item)
+                total_amount += package.monthly_fee
+        
+        # Son 1 ay içindeki hizmet satın alımlarını getir
+        one_month_ago = invoice.created_at - timedelta(days=30)
+        
+        service_purchases = session.exec(
+            select(ServicePurchase).where(
+                ServicePurchase.user_id == invoice.user_id,
+                ServicePurchase.purchase_date >= one_month_ago,
+                ServicePurchase.purchase_date <= invoice.created_at,
+                ServicePurchase.is_used == False  # Henüz faturaya eklenmemiş olanlar
+            )
+        ).all()
+        
+        # Her hizmet satın alımını fatura kalemi olarak ekle
+        for purchase in service_purchases:
+            invoice_item = InvoiceItem(
+                invoice_id=invoice.id,
+                service_type=purchase.service_type,
+                description=f"{purchase.service_type} - {purchase.count} adet",
+                quantity=purchase.count,
+                unit_price=purchase.unit_price,
+                total_price=purchase.purchase_price,
+                tax_rate=0.18  # %18 KDV
+            )
+            
+            session.add(invoice_item)
+            total_amount += purchase.purchase_price
+            
+            # Hizmet satın alımını kullanılmış olarak işaretle
+            purchase.is_used = True
+            session.add(purchase)
+        
+        # Faturanın toplam tutarını güncelle
+        invoice.total_amount = total_amount
+        session.add(invoice)
+        
         session.commit()
         session.refresh(invoice)
         return invoice

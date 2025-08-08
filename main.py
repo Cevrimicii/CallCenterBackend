@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from app.routes import routes
-import uvicorn
-from app.routes import api_router
+from app.routes.routes import api_router
+from app.db.database import init_db
+
+init_db()
 
 app = FastAPI()
 

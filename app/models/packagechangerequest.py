@@ -21,9 +21,4 @@ class PackageChangeRequest(SQLModel, table=True):
 
     # İlişkiler
     user: Optional["User"] = Relationship()
-    requested_package: Optional["Package"] = Relationship(
-        foreign_keys=[requested_package_id]
-    )
-    current_package: Optional["Package"] = Relationship(
-        foreign_keys=[current_package_id]
-    )
+    
