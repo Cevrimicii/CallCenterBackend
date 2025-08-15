@@ -11,6 +11,7 @@ from .agent_intent_log_routes import router as agent_log_router
 from .package_change_request_routes import router as package_request_router
 from .dashboard_routes import router as dashboard_router
 from .customer_service_routes import router as customer_service_router
+from .log_routes import router as log_router
 
 router = APIRouter()
 
@@ -27,4 +28,5 @@ api_router.include_router(agent_log_router)
 api_router.include_router(package_request_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(customer_service_router)
+api_router.include_router(log_router)  # Log monitoring endpoint'leri
 

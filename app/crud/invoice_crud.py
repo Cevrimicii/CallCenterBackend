@@ -6,6 +6,7 @@ from app.models.invoiceitem import InvoiceItem
 from app.models.servicepurchase import ServicePurchase
 from app.models.subscription import Subscription
 from app.models.package import Package
+from app.models.user import User
 from app.db.database import engine
 
 
@@ -28,18 +29,41 @@ def get_invoices_by_user(user_id: int) -> List[Invoice]:
         return session.exec(query).all()
 
 
+def get_invoices_by_user(user_id: int) -> List[Invoice]:
+    """Kullanıcıya göre faturaları getir"""
+    with Session(engine) as session:
+        query = select(Invoice).where(Invoice.user_id == user_id)
+        return session.exec(query).all()
+
 def get_invoices_by_status(status: str) -> List[Invoice]:
     """Duruma göre faturaları getir"""
     with Session(engine) as session:
         query = select(Invoice).where(Invoice.status == status)
         return session.exec(query).all()
 
+def get_unpaid_invoice(phone_number: str) -> List[Invoice]:
+    """Telefon numarasına göre ödenmemiş faturaları getir"""
+    with Session(engine) as session:
+        query = select(Invoice).join(User).where(
+            User.phone_number == phone_number,
+            Invoice.is_paid == False
+        )
+        return session.exec(query).all()
 
 def get_unpaid_invoices() -> List[Invoice]:
     """Ödenmemiş faturaları getir"""
     with Session(engine) as session:
         query = select(Invoice).where(Invoice.is_paid == False)
         return session.exec(query).all()
+
+
+def get_active_invoice_by_phone(phone_number: str) -> Optional[Invoice]:
+    """Telefon numarasına göre aktif faturayı getir (pending veya overdue durumundaki)"""
+    with Session(engine) as session:
+        query = select(Invoice).join(User).where(
+            User.phone_number == phone_number,
+        ).order_by(Invoice.created_at.desc())
+        return session.exec(query).first()
 
 
 def create_invoice(invoice: Invoice) -> Invoice:

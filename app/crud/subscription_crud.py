@@ -159,11 +159,44 @@ def get_user_active_subscription(user_id: int) -> Optional[Subscription]:
         )
         return session.exec(query).first()
 
-def get_commitment_time(user_id: int) -> Optional[datetime]:
-    """Kullanıcının taahhütünün ne zaman biteceğinin zamanını getirir"""
+def get_user_active_subscription_by_phone(phone_number: str) -> Optional[Subscription]:
+    """Telefon numarasına göre kullanıcının aktif aboneliğini getir"""
     with Session(engine) as session:
-        query = select(Subscription.end_date).where(
-            Subscription.user_id == user_id,
+        from app.models.user import User
+        
+        # Önce telefon numarasından kullanıcıyı bul
+        user_query = select(User).where(User.phone_number == phone_number)
+        user = session.exec(user_query).first()
+        
+        if not user:
+            return None
+        
+        # Kullanıcının aktif aboneliğini getir
+        subscription_query = select(Subscription).options(selectinload(Subscription.package)).where(
+            Subscription.user_id == user.id,
             Subscription.is_active == True
         )
-        return session.exec(query).first()
+        return session.exec(subscription_query).first()
+
+def get_commitment_time(phone_number: str) -> Optional[datetime]:
+    """Kullanıcının taahhütünün ne zaman biteceğinin zamanını getirir"""
+    with Session(engine) as session:
+        from app.models.user import User
+        
+        # Önce telefon numarasından kullanıcıyı bul
+        user_query = select(User).where(User.phone_number == phone_number)
+        user = session.exec(user_query).first()
+        
+        if not user:
+            return None
+        
+        # Kullanıcının aktif aboneliğini getir
+        subscription_query = select(Subscription).where(
+            Subscription.user_id == user.id,
+            Subscription.is_active == True
+        )
+        subscription = session.exec(subscription_query).first()
+        
+        if subscription and subscription.end_date:
+            return subscription.end_date
+        return None

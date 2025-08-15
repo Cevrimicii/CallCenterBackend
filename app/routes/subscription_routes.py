@@ -4,7 +4,8 @@ from app.crud.subscription_crud import (
     get_commitment_time,
     create_subscription,
     deactivate_subscription,
-    get_user_active_subscription
+    get_user_active_subscription,
+    get_user_active_subscription_by_phone
 )
 from app.crud.package_change_request_crud import (
     create_package_change_request,
@@ -59,19 +60,19 @@ def deactive_package_change_req(sub_id: int):
     deactivate_subscription(sub_id)
 
 
-@router.get("/{user_id}/commitment-time")
-def get_users_commitment_time(user_id: int):
+@router.get("/{phone_number}/commitment-time")
+def get_users_commitment_time(phone_number: str):
     """Kullanıcının paket taahhütünün ne zaman biteceğini getirir"""
-    commitment_time = get_commitment_time(user_id)
+    commitment_time = get_commitment_time(phone_number)
     if commitment_time:
-        return {"user_id": user_id, "commitment_end_date": commitment_time}
+        return {"phone_number": phone_number, "commitment_end_date": commitment_time}
     else:
         raise HTTPException(status_code=404, detail="No active subscription found for user")
 
-@router.get("/{user_id}/activesub")
-def get_user_active_sub(user_id: int):
+@router.get("/{phone_number}/activesub")
+def get_user_active_sub(phone_number: str):
     """Kullanıcının aktif aboneliğini döner"""
-    subscription = get_user_active_subscription(user_id)
+    subscription = get_user_active_subscription_by_phone(phone_number)
     if subscription:
         return subscription
     else:
